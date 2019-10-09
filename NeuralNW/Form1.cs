@@ -15,6 +15,9 @@ namespace NeuralNW
         public Form1()
         {
             InitializeComponent();
+
+            NeuralNetwork NW = new NeuralNetwork(3,1,2);
+            NW.GetResult(0,0,1);
         }
     }
 }

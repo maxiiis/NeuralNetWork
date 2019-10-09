@@ -8,22 +8,22 @@ namespace NeuralNW
 {
     class Layer
     {
-        public List<Neuron> Neurons { get; }
+        public Neuron[] Neurons { get; }
         public int NeuronCount { get; }
 
-        public Layer(List<Neuron> neurons)
+        public Layer(Neuron[] neurons)
         {
             Neurons = neurons;
-            NeuronCount = neurons.Count;
+            NeuronCount = neurons.Length;
         }
 
-        public List<double> GetResult()
+        public double[] GetResult()
         {
-            List<double> result = new List<double>();
+            double[] result = new double[NeuronCount];
 
-            foreach (Neuron neuron in Neurons)
+            for (int i = 0; i < NeuronCount; i++)
             {
-                result.Add(neuron.Output);
+                result[i] = Neurons[i].Output;
             }
 
             return result;

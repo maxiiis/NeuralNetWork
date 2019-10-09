@@ -8,15 +8,15 @@ namespace NeuralNW
 {
     class Neuron
     {
-        public List<double> Weights { get; }
+        public double[] Weights { get; }
         public double Output { get; private set; }
         public double Delta { get; private set; }
-        public List<double> Inputs { get; }
+        public double[] Inputs { get; }
 
         public Neuron(int inputCount)
         {
-            Weights = new List<double>();
-            Inputs = new List<double>();
+            Weights = new double[inputCount];
+            Inputs = new double[inputCount];
 
             SetRandomWeights(inputCount);
         }
@@ -27,7 +27,7 @@ namespace NeuralNW
 
             for (int i = 0; i < inputCount; i++)
             {
-                Weights.Add(random.NextDouble());
+                Weights[i] =random.NextDouble();
             }
         }
 
@@ -37,16 +37,16 @@ namespace NeuralNW
             return result;
         }
 
-        public double GetResult(List<double> inputs)
+        public double GetResult(double[] inputs)
         {
-            for (int i = 0; i < inputs.Count; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
                 Inputs[i] = inputs[i];
             }
 
             double sum = 0.0;
 
-            for (int i = 0; i < inputs.Count; i++)
+            for (int i = 0; i < inputs.Length; i++)
             {
                 sum += inputs[i] * Weights[i];
             }
