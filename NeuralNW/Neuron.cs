@@ -51,8 +51,8 @@ namespace NeuralNW
                 sum += inputs[i] * Weights[i];
             }
 
-            double result = Sigmoid(sum);
-            return result;
+            Output = Sigmoid(sum);
+            return Output;
         }
     }
 }
