@@ -6,18 +6,19 @@ using System.Threading.Tasks;
 
 namespace NeuralNW
 {
-    class NeuralNetwork
+    public class NeuralNetwork
     {
         public Layer[] Layers { get; }
         public int Inputs { get; }
         public int Outputs { get; }
         public double LearningSpeed { get; }
 
-        public NeuralNetwork(int inputs,int outputs,params int[] layers)
+        public NeuralNetwork(int inputs,int outputs,double learnSpeed,params int[] layers)
         {
             Inputs = inputs;
             Outputs = outputs;
             Layers = new Layer[layers.Length + 2];
+            LearningSpeed = learnSpeed;
 
             Neuron[] inputNeurons = new Neuron[Inputs];
             for (int i = 0; i < Inputs; i++)
@@ -43,14 +44,14 @@ namespace NeuralNW
             Neuron[] outputNeurons = new Neuron[outputs];
             for (int i = 0; i < Outputs; i++)
             {
-                Neuron neuron = new Neuron(Layers[Layers.Length-2].NeuronCount);
+                Neuron neuron = new Neuron(Layers[Layers.Length - 2].NeuronCount);
                 outputNeurons[i] = neuron;
             }
             Layer outputLayer = new Layer(outputNeurons);
-            Layers[Layers.Length-1] = outputLayer;
+            Layers[Layers.Length - 1] = outputLayer;
         }
 
-        public double[] GetResult(params double[] input)
+        public Neuron GetResult(params double[] input)
         {
             for (int i = 0; i < Layers[0].NeuronCount; i++)
             {
@@ -69,7 +70,68 @@ namespace NeuralNW
                 }
             }
 
-            return Layers.Last().GetResult();
+            Neuron result = Layers.Last().Neurons.OrderByDescending(x => x.Output).ToArray()[0];
+
+            return result;
+        }
+
+        public double Learn(double[] expected,double[,] inputs,int epoch)
+        {
+            double error = 0.0;
+            for (int i = 0; i < epoch; i++)
+            {
+                for (int j = 0; j < expected.Length; j++)
+                {
+                    error += ErrorBack(expected[j],GetRow(inputs,j));
+                }
+            }
+            error = error / epoch;
+            return error;
+        }
+
+        public static double[] GetRow(double[,] input,int row)
+        {
+            double[] result = new double[input.GetLength(1)];
+
+            for (int i = 0; i < result.Length; i++)
+                result[i] = input[row,i];
+
+            return result;
+        }
+
+        private double ErrorBack(double output,double[] inputs)
+        {
+            double actual = GetResult(inputs).Output;
+
+            double difference = actual - output;
+
+            Layer last = Layers[Layers.Length - 1];
+            for (int i = 0; i < last.NeuronCount; i++)
+            {
+                last.Neurons[i].Learn(difference,LearningSpeed);
+            }
+
+            for (int i = Layers.Length - 2; i >= 0; i--)
+            {
+                Layer layer = Layers[i];
+                Layer prevLayer = Layers[i + 1];
+
+                for (int j = 0; j < layer.NeuronCount; j++)
+                {
+                    Neuron neuron = layer.Neurons[j];
+
+                    for (int k = 0; k < prevLayer.NeuronCount; k++)
+                    {
+                        Neuron prevNeuron = prevLayer.Neurons[k];
+                        double error = prevNeuron.Weights[j] * prevNeuron.Delta;
+                        neuron.Learn(error,LearningSpeed);
+                    }
+                }
+            }
+
+            double newdifference = GetResult(inputs).Output - output;
+
+            return difference * difference;
         }
     }
 }

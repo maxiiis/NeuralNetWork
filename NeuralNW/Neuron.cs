@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NeuralNW
 {
-    class Neuron
+    public class Neuron
     {
         public double[] Weights { get; }
         public double Output { get; private set; }
@@ -23,6 +23,12 @@ namespace NeuralNW
 
         private void SetRandomWeights(int inputCount)
         {
+            if (Inputs.Length == 1)
+            {
+                Weights[0] = 1;
+                return;
+            }
+
             Random random = new Random();
 
             for (int i = 0; i < inputCount; i++)
@@ -34,6 +40,13 @@ namespace NeuralNW
         public double Sigmoid(double x)
         {
             double result = 1.0 / (1.0 + Math.Exp(-x));
+            return result;
+        }
+
+        public double SigmoidDx(double x)
+        {
+            double sigmoid = Sigmoid(x);
+            double result = sigmoid / (1 - sigmoid);
             return result;
         }
 
@@ -51,8 +64,33 @@ namespace NeuralNW
                 sum += inputs[i] * Weights[i];
             }
 
-            Output = Sigmoid(sum);
+            if (Inputs.Length == 1)
+            {
+                Output = sum;
+            }
+            else
+            {
+                Output = Sigmoid(sum);
+            }
+
             return Output;
+        }
+
+        public void Learn(double error,double learnSpeed)
+        {
+            if (Inputs.Length == 1)
+                return;
+
+
+            Delta = error * SigmoidDx(Output);
+
+            for (int i = 0; i < Weights.Length; i++)
+            {
+                double weight = Weights[i];
+                double input = Inputs[i];
+                double newWeight = weight - input * Delta * learnSpeed;
+                Weights[i] = newWeight;
+            }
         }
     }
 }

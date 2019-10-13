@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NeuralNW
 {
-    class Layer
+    public class Layer
     {
         public Neuron[] Neurons { get; }
         public int NeuronCount { get; }
