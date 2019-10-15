@@ -111,7 +111,7 @@ namespace NeuralNW
                 last.Neurons[i].Learn(difference,LearningSpeed);
             }
 
-            for (int i = Layers.Length - 2; i >= 0; i--)
+            for (int i = Layers.Length - 2; i > 0; i--)
             {
                 Layer layer = Layers[i];
                 Layer prevLayer = Layers[i + 1];
