@@ -13,12 +13,16 @@ namespace NeuralNW
         public double Delta { get; private set; }
         public double[] Inputs { get; }
 
-        public Neuron(int inputCount)
+        public Neuron(int inputCount,double[] weights = null)
         {
             Weights = new double[inputCount];
             Inputs = new double[inputCount];
 
-            SetRandomWeights(inputCount);
+            if (weights == null)
+                SetRandomWeights(inputCount);
+            else
+                for (int i = 0; i < Weights.Length; i++)
+                    Weights[i] = weights[i];
         }
 
         private void SetRandomWeights(int inputCount)
@@ -33,7 +37,7 @@ namespace NeuralNW
 
             for (int i = 0; i < inputCount; i++)
             {
-                Weights[i] =random.NextDouble();
+                Weights[i] = random.NextDouble();
             }
         }
 

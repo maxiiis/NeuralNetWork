@@ -71,27 +71,32 @@ namespace NeuralNW
 
             //DrawImage(inputs.Select(x => x.ToString()).ToArray());
 
-            double output = NW.GetResult(inputs).Output;
+            double[] output = NW.GetResult(inputs);
 
-            label1.Text = $"Ouput = {Math.Round(output) * 100}";
+            label1.Text = $"B = {Math.Round(output[0],5)*100}";
+            label2.Text = $"C = {Math.Round(output[1],5) * 100}";
+            label3.Text = $"M = {Math.Round(output[2],5) * 100}";
         }
 
         private void button2_Click(object sender,EventArgs e)
         {
-            NW = new NeuralNetwork(784,1,0.1,392);
+            NW = new NeuralNetwork(784,3,392);
         }
 
         int num = 0;
 
         private void button4_Click(object sender,EventArgs e)
         {
-            int Size = 200;
+            int Size = 600;
+            int Bs = 0;
+            int Cs = 0;
+            int Ms = 0;
 
             string path = @"C:\Users\mak36\OneDrive\Рабочий стол\MAIN\4 курс\ИС\emnist\emnist-letters-train.csv";
 
             string[] images = File.ReadAllLines(path);
 
-            List<double> expected = new List<double>();
+            List<double[]> expected = new List<double[]>();
 
             List<double[]> inputs = new List<double[]>();
 
@@ -101,15 +106,37 @@ namespace NeuralNW
 
                 int symbolNum = Convert.ToInt32(buf[0]);
 
+                double[] output = new double[3];
+
                 switch (symbolNum)
                 {
                     case 2:
-                        expected.Add(0);
+                        if (Bs < Size / 3)
+                        {
+                            output[0] = 1;
+                            expected.Add(output);
+                            Bs++;
+                        }
+                        //DrawImage(buf);
+                        //num = i;
+                        break;
+                    case 3:
+                        if (Cs < Size / 3)
+                        {
+                            output[1] = 1;
+                            expected.Add(output);
+                            Cs++;
+                        }
                         //DrawImage(buf);
                         //num = i;
                         break;
                     case 13:
-                        expected.Add(1);
+                        if (Ms < Size / 3)
+                        {
+                            output[2] = 1;
+                            expected.Add(output);
+                            Ms++;
+                        }
                         break;
                     default:
                         continue;
@@ -128,9 +155,9 @@ namespace NeuralNW
 
             double[,] Inputs = ltoD(inputs,Size);
 
-            double error = NW.Learn(expected.ToArray(),Inputs,Convert.ToInt32(textBox3.Text));
+            double error = NW.Learn(expected.ToArray(),Inputs,Convert.ToInt32(textBox3.Text),0.1);
 
-            label2.Text = $"Error = {error}";
+            label4.Text = $"Error = {Math.Round(error,7)}";
         }
 
         private void DrawImage(string[] buf)
@@ -238,6 +265,16 @@ namespace NeuralNW
             g.DrawImage(bmp,0,0,rect,GraphicsUnit.Pixel);
 
             return crop;
+        }
+
+        private void button7_Click(object sender,EventArgs e)
+        {
+            NW.Save();
+        }
+
+        private void button5_Click(object sender,EventArgs e)
+        {
+            NW = new NeuralNetwork("NW.bin");
         }
     }
 }
