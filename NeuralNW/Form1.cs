@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace NeuralNW
@@ -53,13 +50,15 @@ namespace NeuralNW
 
         private void button3_Click(object sender,EventArgs e)
         {
+            if (NW == null)
+            {
+                MessageBox.Show("Нет нейросети","Ошибка");
+                return;
+            }
+
             Bitmap inputPicture = new Bitmap(pictureBox1.Image);
-
             inputPicture = Crop(inputPicture);
-
             inputPicture = new Bitmap(inputPicture,new Size(28,28));
-
-            //pictureBox1.Image = inputPicture;
 
             List<double> inputsL = new List<double>();
 
@@ -68,137 +67,107 @@ namespace NeuralNW
                     inputsL.Add(inputPicture.GetPixel(y,x).R >= 128 ? 1 : 0);
 
             double[] inputs = inputsL.ToArray();
-
-            //DrawImage(inputs.Select(x => x.ToString()).ToArray());
-
             double[] output = NW.GetResult(inputs);
-
-            label1.Text = $"B = {Math.Round(output[0],5)*100}";
-            label2.Text = $"C = {Math.Round(output[1],5) * 100}";
-            label3.Text = $"M = {Math.Round(output[2],5) * 100}";
+            
+            richTextBox1.Text += $"B = {Math.Round(output[0],5) * 100},"
+                + $" C = {Math.Round(output[1],5) * 100},"
+                + $" M = {Math.Round(output[2],5) * 100}\n";
         }
 
         private void button2_Click(object sender,EventArgs e)
         {
             NW = new NeuralNetwork(784,3,392);
+            richTextBox1.Text += "Создана новая нейросеть\n";
         }
-
-        int num = 0;
 
         private void button4_Click(object sender,EventArgs e)
         {
-            int Size = 600;
-            int Bs = 0;
-            int Cs = 0;
-            int Ms = 0;
+            Button learn = (Button)sender;
 
-            string path = @"C:\Users\mak36\OneDrive\Рабочий стол\MAIN\4 курс\ИС\emnist\emnist-letters-train.csv";
+            learn.Enabled = false;
 
-            string[] images = File.ReadAllLines(path);
-
-            List<double[]> expected = new List<double[]>();
-
-            List<double[]> inputs = new List<double[]>();
-
-            for (int i = num + 1; i < images.Length - 1; i++)
+            if (NW == null)
             {
-                string[] buf = images[i].Split(',');
+                MessageBox.Show("Нечего обучать","Ошибка");
+                learn.Enabled = true;
+                return;
+            }
 
-                int symbolNum = Convert.ToInt32(buf[0]);
+            try
+            {
+                int Size = Convert.ToInt32(textBox2.Text);
+                int Bs = 0;
+                int Cs = 0;
+                int Ms = 0;
 
-                double[] output = new double[3];
+                string path = @"emnist\emnist-letters-train.csv";
 
-                switch (symbolNum)
+                string[] images = File.ReadAllLines(path);
+
+                List<double[]> expected = new List<double[]>();
+
+                List<double[]> inputs = new List<double[]>();
+
+                for (int i = 0; i < images.Length - 1; i++)
                 {
-                    case 2:
-                        if (Bs < Size / 3)
-                        {
-                            output[0] = 1;
-                            expected.Add(output);
-                            Bs++;
-                        }
-                        //DrawImage(buf);
-                        //num = i;
+                    string[] buf = images[i].Split(',');
+
+                    int symbolNum = Convert.ToInt32(buf[0]);
+
+                    double[] output = new double[3];
+
+                    switch (symbolNum)
+                    {
+                        case 2: //B
+                            if (Bs < Size / 3)
+                            {
+                                output[0] = 1;
+                                expected.Add(output);
+                                Bs++;
+                            }
+                            break;
+                        case 3: //C
+                            if (Cs < Size / 3)
+                            {
+                                output[1] = 1;
+                                expected.Add(output);
+                                Cs++;
+                            }
+                            break;
+                        case 13: //M
+                            if (Ms < Size / 3)
+                            {
+                                output[2] = 1;
+                                expected.Add(output);
+                                Ms++;
+                            }
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    double[] buf2 = buf.Skip(1).Select(x => Convert.ToDouble(x)).ToArray();
+
+                    inputs.Add(buf2);
+
+                    if (inputs.Count == Size)
                         break;
-                    case 3:
-                        if (Cs < Size / 3)
-                        {
-                            output[1] = 1;
-                            expected.Add(output);
-                            Cs++;
-                        }
-                        //DrawImage(buf);
-                        //num = i;
-                        break;
-                    case 13:
-                        if (Ms < Size / 3)
-                        {
-                            output[2] = 1;
-                            expected.Add(output);
-                            Ms++;
-                        }
-                        break;
-                    default:
-                        continue;
                 }
 
-                if (num == i)
-                    break;
+                double[,] Inputs = GetInputs(inputs,Size);
+                double error = NW.Learn(expected.ToArray(),Inputs,Convert.ToInt32(textBox3.Text),Convert.ToDouble(textBox4.Text));
 
-                double[] buf2 = buf.Skip(1).Select(x => Convert.ToDouble(x)).ToArray();
 
-                inputs.Add(buf2);
-
-                if (inputs.Count == Size)
-                    break;
+                richTextBox1.Text += $"Средняя ошибка = {Math.Round(error,7)}\n";
+                learn.Enabled = true;
             }
-
-            double[,] Inputs = ltoD(inputs,Size);
-
-            double error = NW.Learn(expected.ToArray(),Inputs,Convert.ToInt32(textBox3.Text),0.1);
-
-            label4.Text = $"Error = {Math.Round(error,7)}";
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
-        private void DrawImage(string[] buf)
-        {
-            Bitmap bmp = new Bitmap(28,28);
-
-            string[] pixels = buf;//.Skip(1).ToArray();
-
-            for (int i = 0; i < 28 * 28; i++)
-            {
-                bmp.SetPixel(i % 28,i / 28,Convert.ToDouble(pixels[i]) >= 128 ? Color.White : Color.Black);
-            }
-
-            pictureBox1.Image = bmp;
-            pictureBox1.Invalidate();
-
-            List<string> pixelsI = new List<string>();
-
-            for (int i = 0; i < 28 * 28; i++)
-            {
-                //pixelsI.Add(Convert.ToDouble(pixels[i]) >= 128 ? "1" : "0");
-                pixelsI.Add(pixels[i]);
-            }
-
-            List<string> lists = new List<string>();
-
-            for (int i = 0; i < 28; i++)
-            {
-                string newstring = "";
-                for (int j = 0; j < 28; j++)
-                {
-                    newstring += pixelsI.First();
-                    pixelsI.RemoveAt(0);
-                }
-                lists.Add(newstring);
-            }
-
-            File.WriteAllLines("1.txt",lists.ToArray());
-        }
-
-        private double[,] ltoD(List<double[]> inputs,int size)
+        private double[,] GetInputs(List<double[]> inputs,int size)
         {
             double[,] rezult = new double[size,inputs[0].Length];
 
@@ -208,9 +177,7 @@ namespace NeuralNW
                 {
                     rezult[i,k] = inputs[i][k] >= 128 ? 1 : 0;
                 }
-
             }
-
             return rezult;
         }
 
@@ -239,7 +206,6 @@ namespace NeuralNW
                         if (yDOWN < i) yDOWN = i;
                     }
                 }
-
             }
 
             for (int i = 0; i < bmp.Height; i++)
@@ -267,14 +233,43 @@ namespace NeuralNW
             return crop;
         }
 
-        private void button7_Click(object sender,EventArgs e)
+        private void openToolStripMenuItem_Click(object sender,EventArgs e)
         {
-            NW.Save();
+            string filePath = "";
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                filePath = openFileDialog1.FileName;
+            try
+            {
+                NW = new NeuralNetwork(filePath);
+            }
+            catch
+            {
+                MessageBox.Show("Ошибка в структуре файла","Ошибка");
+            }
+            string[] splited = filePath.Split('\\');
+            richTextBox1.Text += $"Загружена сеть: {splited[splited.Length-1]}\n";
         }
 
-        private void button5_Click(object sender,EventArgs e)
+        private void saveToolStripMenuItem_Click(object sender,EventArgs e)
         {
-            NW = new NeuralNetwork("NW.bin");
+            if (NW == null)
+            {
+                MessageBox.Show("Нечего сохранять","Ошибка");
+                return;
+            }
+
+            if (saveFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                NW.Save(saveFileDialog1.FileName);
+                string[] splited = saveFileDialog1.FileName.Split('\\');
+                richTextBox1.Text += $"Нейросеть сохранена как {splited[splited.Length - 1]}\n";
+            }
+        }
+
+        private void createToolStripMenuItem_Click(object sender,EventArgs e)
+        {
+            NW = new NeuralNetwork(784,3,392);
+            richTextBox1.Text += "Создана новая нейросеть\n";
         }
     }
 }

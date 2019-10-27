@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace NeuralNW
 {
@@ -138,6 +137,9 @@ namespace NeuralNW
             {
                 for (int j = 0; j < expected.Length; j++)
                 {
+                    //
+                    Application.DoEvents();
+                    //
                     error += ErrorBack(expected[j],GetRow(inputs,j));
                 }
             }
@@ -191,10 +193,8 @@ namespace NeuralNW
             return error * error;
         }
 
-        public void Save()
+        public void Save(string path)
         {
-            string path = "NW.bin";
-
             List<double> saveDouble = new List<double>();
             saveDouble.Add(Layers.Count());
             saveDouble.Add(Layers[0].NeuronCount);
